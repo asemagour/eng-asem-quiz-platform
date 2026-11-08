@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لوحة التحكم - المهندس عاصم خالد</title>
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --secondary: #3498db;
+            --success: #27ae60;
+            --danger: #e74c3c;
+            --light: #f8f9fa;
+            --dark: #2c3e50;
+            --accent: #e67e22;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #eef2f3;
+            margin: 0;
+            padding: 20px;
+            direction: rtl;
+        }
+        .container {
+            max-width: 700px;
+            margin: 40px auto;
+            background: #fff;
+            padding: 30px;
+            border-radius: 14px;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+            border-top: 5px solid var(--accent);
+        }
+        .brand-header {
+            text-align: center;
+            border-bottom: 2px solid #ecf0f1;
+            padding-bottom: 15px;
+            margin-bottom: 25px;
+        }
+        .logo-img {
+            width: 75px;
+            height: 75px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin-bottom: 10px;
+            border: 2px solid var(--secondary);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+        }
+        h1 { color: var(--primary); font-size: 24px; margin: 0 0 5px 0; }
+        .instructor-title { color: var(--accent); font-size: 16px; font-weight: bold; margin-bottom: 5px; }
+        
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; color: var(--dark); }
+        input[type="text"], select, textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #bdc3c7;
+            border-radius: 6px;
+            font-size: 15px;
+            box-sizing: border-box;
+            font-family: inherit;
+        }
+        textarea { resize: vertical; height: 90px; }
+        .btn {
+            background: var(--success);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 6px;
+            cursor: pointer;
+            width: 100%;
+            transition: 0.3s;
+        }
+        .btn:hover { opacity: 0.9; }
+        .btn-danger { background: var(--danger); }
+        .admin-quiz-card {
+            background: var(--light);
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            border-right: 5px solid var(--secondary);
+        }
+        .footer-credit {
+            text-align: center;
+            margin-top: 30px;
+            font-size: 13px;
+            color: #7f8c8d;
+            border-top: 1px solid #ecf0f1;
+            padding-top: 15px;
+            line-height: 1.6;
+        }
+        .footer-credit span { color: var(--accent); font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="brand-header">
+        <img src="LOGO.png" alt="المهندس عاصم خالد" class="logo-img" onerror="this.style.display='none'">
+        <h1>لوحة تحكم المشرف</h1>
+        <div class="instructor-title">المهندس عاصم خالد</div>
+    </div>
+
+    <h3>إنشاء امتحان جديد بكود خاص</h3>
+    <div class="form-group">
+        <label>عنوان الاختبار:</label>
+        <input type="text" id="new-exam-title" placeholder="مثال: امتحان أساسيات البرمجة بايثون">
+    </div>
+    <div class="form-group">
+        <label>كود الاختبار (بالإنجليزي):</label>
+        <input type="text" id="new-exam-code" placeholder="مثال: PY101" style="text-transform: uppercase; font-weight: bold;">
+    </div>
+
+    <h4 style="margin-top: 25px; color: var(--secondary);">إضافة أسئلة لهذا الاختبار</h4>
+    <div class="form-group">
+        <label>نوع السؤال:</label>
+        <select id="question-type" onchange="toggleQuestionFields()">
+            <option value="mcq">اختيار من متعدد (35 ثانية)</option>
+            <option value="essay">مقالي (دقيقة ونصف)</option>
+        </select>
+    </div>
+
+    <div class="form-group">
+        <label>نص السؤال:</label>
+        <input type="text" id="new-q-text" placeholder="اكتب السؤال هنا...">
+    </div>
+
+    <div id="mcq-fields">
+        <div class="form-group"><label>الخيار الأول:</label><input type="text" id="opt-0" placeholder="الخيار الأول"></div>
+        <div class="form-group"><label>الخيار الثاني:</label><input type="text" id="opt-1" placeholder="الخيار الثاني"></div>
+        <div class="form-group"><label>الخيار الثالث:</label><input type="text" id="opt-2" placeholder="الخيار الثالث"></div>
+        <div class="form-group"><label>الخيار الرابع:</label><input type="text" id="opt-3" placeholder="الخيار الرابع"></div>
+        <div class="form-group">
+            <label>الإجابة الصحيحة:</label>
+            <select id="correct-answer">
+                <option value="0">الخيار الأول</option>
+                <option value="1">الخيار الثاني</option>
+                <option value="2">الخيار الثالث</option>
+                <option value="3">الخيار الرابع</option>
+            </select>
+        </div>
+    </div>
+
+    <div id="essay-fields" style="display: none;">
+        <div class="form-group">
+            <label>نموذج الإجابة الصحيحة (للمراجعة):</label>
+            <textarea id="essay-model-answer" placeholder="اكتب الإجابة النموذجية أو المفاتيح الأساسية للإجابة..."></textarea>
+        </div>
+    </div>
+
+    <button class="btn" onclick="addQuestionToExamBuilder()">+ إضافة السؤال لقائمة الامتحان الحالي</button>
+
+    <div id="current-building-questions" style="margin-top: 20px; background: #f8f9fa; padding: 10px; border-radius: 6px; display: none;">
+        <strong>الأسئلة المضافة لهذا الاختبار (<span id="building-count">0</span>):</strong>
+        <ul id="building-list" style="margin: 5px 0 0 0; padding-right: 20px; font-size: 14px;"></ul>
+    </div>
+
+    <button class="btn" style="background: var(--success); margin-top: 15px;" onclick="saveNewExamToPlatform()">💾 حفظ ونشر الاختبار بالكامل</button>
+
+    <h3 style="margin-top: 35px;">الاختبارات الحالية على المنصة</h3>
+    <div id="admin-exams-list"></div>
+    <button class="btn btn-danger" onclick="resetDefaultExams()" style="margin-top: 15px;">استعادة الاختبارات الافتراضية</button>
+
+    <div class="footer-credit">
+        إشراف وتطوير: <span>المهندس عاصم خالد</span> | تواصل واتساب: <span>01020441459</span>
+    </div>
+</div>
+
+<script>
+    const defaultExams = [
+        {
+            code: "PY101",
+            title: "امتحان أساسيات بايثون",
+            questions: [
+                {
+                    type: "mcq",
+                    question: "ما هي لغة البرمجة الأساسية المستخدمة عادة في الذكاء الاصطناعي وتحليل البيانات؟",
+                    options: ["Python", "HTML", "CSS", "C++"],
+                    answer: 0
+                },
+                {
+                    type: "essay",
+                    question: "اذكر باختصار الفرق الأساسي بين لغات البرمجة المفسرة (Interpreted) والمترجمة (Compiled)؟",
+                    modelAnswer: "اللغات المترجمة يتم تحويل كودها بالكامل إلى لغة الآلة دفعة واحدة قبل التنفيذ، بينما المفسرة تُنفذ سطر بسطر."
+                }
+            ]
+        }
+    ];
+
+    let exams = JSON.parse(localStorage.getItem('asem_exams_v1')) || defaultExams;
+    let tempBuildingQuestions = [];
+
+    function saveExamsStorage() {
+        localStorage.setItem('asem_exams_v1', JSON.stringify(exams));
+    }
+
+    function toggleQuestionFields() {
+        const type = document.getElementById('question-type').value;
+        if(type === 'mcq') {
+            document.getElementById('mcq-fields').style.display = 'block';
+            document.getElementById('essay-fields').style.display = 'none';
+        } else {
+            document.getElementById('mcq-fields').style.display = 'none';
+            document.getElementById('essay-fields').style.display = 'block';
+        }
+    }
+
+    function addQuestionToExamBuilder() {
+        const type = document.getElementById('question-type').value;
+        const text = document.getElementById('new-q-text').value.trim();
+
+        if(!text) {
+            alert("من فضلك أدخل نص السؤال!");
+            return;
+        }
+
+        let newQ = { type: type, question: text };
+
+        if(type === 'mcq') {
+            const o0 = document.getElementById('opt-0').value.trim();
+            const o1 = document.getElementById('opt-1').value.trim();
+            const o2 = document.getElementById('opt-2').value.trim();
+            const o3 = document.getElementById('opt-3').value.trim();
+            const ans = parseInt(document.getElementById('correct-answer').value);
+
+            if(!o0 || !o1 || !o2 || !o3) {
+                alert("من فضلك املأ جميع خيارات الاختيار من متعدد!");
+                return;
+            }
+            newQ.options = [o0, o1, o2, o3];
+            newQ.answer = ans;
+        } else {
+            const modelAns = document.getElementById('essay-model-answer').value.trim();
+            if(!modelAns) {
+                alert("من فضلك أدخل نموذج الإجابة الصحيحة للسؤال المقالي!");
+                return;
+            }
+            newQ.modelAnswer = modelAns;
+        }
+
+        tempBuildingQuestions.push(newQ);
+        updateBuildingListUI();
+        
+        document.getElementById('new-q-text').value = "";
+        document.getElementById('opt-0').value = "";
+        document.getElementById('opt-1').value = "";
+        document.getElementById('opt-2').value = "";
+        document.getElementById('opt-3').value = "";
+        document.getElementById('essay-model-answer').value = "";
+    }
+
+    function updateBuildingListUI() {
+        const container = document.getElementById('current-building-questions');
+        const list = document.getElementById('building-list');
+        const count = document.getElementById('building-count');
+
+        if(tempBuildingQuestions.length > 0) {
+            container.style.display = 'block';
+            count.innerText = tempBuildingQuestions.length;
+            list.innerHTML = "";
+            tempBuildingQuestions.forEach((q, i) => {
+                list.innerHTML += `<li>${q.question} <span style="color:var(--secondary);">(${q.type === 'mcq' ? 'اختياري' : 'مقالي'})</span></li>`;
+            });
+        } else {
+            container.style.display = 'none';
+        }
+    }
+
+    function saveNewExamToPlatform() {
+        const title = document.getElementById('new-exam-title').value.trim();
+        const code = document.getElementById('new-exam-code').value.trim().toUpperCase();
+
+        if(!title || !code) {
+            alert("من فضلك أدخل عنوان الاختبار وكود الدخول الخاص به!");
+            return;
+        }
+        if(tempBuildingQuestions.length === 0) {
+            alert("يجب إضافة سؤال واحد على الأقل للاختبار!");
+            return;
+        }
+
+        if(exams.some(ex => ex.code === code)) {
+            alert("كود الاختبار موجود مسبقاً، اختر كود آخر فريد!");
+            return;
+        }
+
+        exams.push({
+            code: code,
+            title: title,
+            questions: [...tempBuildingQuestions]
+        });
+
+        saveExamsStorage();
+        tempBuildingQuestions = [];
+        updateBuildingListUI();
+        document.getElementById('new-exam-title').value = "";
+        document.getElementById('new-exam-code').value = "";
+        renderAdminExams();
+        alert("تم إنشاء ونشر الاختبار بنجاح بررمز الدخول: " + code);
+    }
+
+    function deleteExam(code) {
+        if(exams.length <= 1) {
+            alert("يجب أن تبقي على اختبار واحد على الأقل في المنصة!");
+            return;
+        }
+        if(confirm("هل أنت متأكد من حذف هذا الاختبار بالكامل؟")) {
+            exams = exams.filter(ex => ex.code !== code);
+            saveExamsStorage();
+            renderAdminExams();
+        }
+    }
+
+    function resetDefaultExams() {
+        if(confirm("هل تريد استعادة الاختبارات الافتراضية؟")) {
+            exams = JSON.parse(JSON.stringify(defaultExams));
+            saveExamsStorage();
+            renderAdminExams();
+            alert("تمت استعادة الاختبارات الافتراضية بنجاح!");
+        }
+    }
+
+    function renderAdminExams() {
+        const listContainer = document.getElementById('admin-exams-list');
+        listContainer.innerHTML = "";
+        exams.forEach((ex) => {
+            listContainer.innerHTML += `
+                <div class="admin-quiz-card">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <strong style="font-size: 17px; color: var(--primary);">${ex.title}</strong><br>
+                            <span>كود الدخول: <code style="background:#e1f5fe; padding:2px 6px; border-radius:4px; font-weight:bold; color:var(--secondary);">${ex.code}</code></span> | 
+                            <span>عدد الأسئلة: ${ex.questions.length}</span>
+                        </div>
+                        <button class="btn btn-danger" style="width: auto; padding: 6px 12px; font-size: 13px;" onclick="deleteExam('${ex.code}')">حذف الاختبار</button>
+                    </div>
+                </div>
+            `;
+        });
+    }
+
+    renderAdminExams();
+</script>
+
+</body>
+</html>

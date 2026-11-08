@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>منصة الاختبارات التفاعلية - المهندس عاصم خالد</title>
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --secondary: #3498db;
+            --success: #27ae60;
+            --danger: #e74c3c;
+            --light: #f8f9fa;
+            --dark: #2c3e50;
+            --accent: #e67e22;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #eef2f3;
+            margin: 0;
+            padding: 20px;
+            direction: rtl;
+        }
+        .container {
+            max-width: 700px;
+            margin: 40px auto;
+            background: #fff;
+            padding: 30px;
+            border-radius: 14px;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+            border-top: 5px solid var(--secondary);
+        }
+        .brand-header {
+            text-align: center;
+            border-bottom: 2px solid #ecf0f1;
+            padding-bottom: 15px;
+            margin-bottom: 25px;
+        }
+        .logo-img {
+            width: 75px;
+            height: 75px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin-bottom: 10px;
+            border: 2px solid var(--secondary);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+        }
+        h1 { color: var(--primary); font-size: 24px; margin: 0 0 5px 0; }
+        .instructor-title { color: var(--accent); font-size: 16px; font-weight: bold; margin-bottom: 5px; }
+        .contact-info { color: #7f8c8d; font-size: 14px; font-weight: bold; }
+        
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; color: var(--dark); }
+        input[type="text"], textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #bdc3c7;
+            border-radius: 6px;
+            font-size: 15px;
+            box-sizing: border-box;
+            font-family: inherit;
+        }
+        textarea { resize: vertical; height: 90px; }
+        .btn {
+            background: var(--success);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 6px;
+            cursor: pointer;
+            width: 100%;
+            transition: 0.3s;
+        }
+        .btn:hover { opacity: 0.9; }
+        .btn-secondary { background: #95a5a6; }
+
+        .quiz-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            font-weight: bold;
+            color: var(--secondary);
+        }
+        .timer-box {
+            background: #fbeed5;
+            color: #c0392b;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 14px;
+        }
+        .question-box {
+            font-size: 18px;
+            color: var(--dark);
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+        .options-list { list-style: none; padding: 0; }
+        .option-item {
+            background: var(--light);
+            border: 1px solid #dcdde1;
+            margin-bottom: 10px;
+            padding: 12px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .option-item:hover { background: #dfe6e9; }
+        .option-item.selected {
+            background: var(--secondary);
+            color: white;
+            border-color: var(--secondary);
+        }
+        .footer-credit {
+            text-align: center;
+            margin-top: 30px;
+            font-size: 13px;
+            color: #7f8c8d;
+            border-top: 1px solid #ecf0f1;
+            padding-top: 15px;
+            line-height: 1.6;
+        }
+        .footer-credit span { color: var(--accent); font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="brand-header">
+        <img src="LOGO.png" alt="المهندس عاصم خالد" class="logo-img" onerror="this.style.display='none'">
+        <h1>منصة الاختبارات التفاعلية</h1>
+        <div class="instructor-title">المهندس عاصم خالد</div>
+        <div class="contact-info">للتواصل والاستفسارات: 01020441459</div>
+    </div>
+
+    <!-- شاشة دخول الطالب -->
+    <div id="login-screen">
+        <div class="form-group">
+            <label>أدخل اسمك الثلاثي:</label>
+            <input type="text" id="student-name" placeholder="مثال: أحمد محمد علي">
+        </div>
+        <div class="form-group">
+            <label>أدخل كود الاختبار:</label>
+            <input type="text" id="exam-code-input" placeholder="مثال: PY101" style="text-transform: uppercase; font-weight: bold; letter-spacing: 1px;">
+        </div>
+        <button class="btn" onclick="startQuiz()">دخول وبدء الاختبار</button>
+    </div>
+
+    <!-- شاشة الاختبار -->
+    <div id="quiz-screen" style="display: none;">
+        <div class="quiz-header">
+            <span id="question-progress">السؤال 1 من 0</span>
+            <div class="timer-box">الوقت المتبقي: <span id="time-left">35</span> ثانية</div>
+        </div>
+        <div class="question-box" id="question-text"></div>
+        
+        <ul class="options-list" id="options-list"></ul>
+
+        <div id="essay-container" style="display: none;">
+            <textarea id="essay-answer" placeholder="اكتب إجابتك هنا بالتفصيل..."></textarea>
+        </div>
+
+        <button class="btn" id="next-btn" onclick="nextQuestion()" style="margin-top: 20px;">السؤال التالي</button>
+    </div>
+
+    <!-- شاشة النتيجة -->
+    <div id="result-screen" style="display: none; text-align: center;">
+        <h2 style="color: var(--success);">انتهى الاختبار بنجاح!</h2>
+        <p id="result-score" style="font-size: 18px; font-weight: bold;"></p>
+        <div id="review-container" style="text-align: right; margin-top: 20px;"></div>
+        <button class="btn btn-secondary" onclick="resetQuiz()" style="margin-top: 20px;">العودة لصفحة الدخول</button>
+    </div>
+
+    <div class="footer-credit">
+        منصة الاختبارات البرمجية والذكاء الاصطناعي<br>
+        إشراف وتطوير: <span>المهندس عاصم خالد</span> | تواصل واتساب وخط ساخن: <span>01020441459</span><br>
+        جميع الحقوق محفوظة © 2026
+    </div>
+</div>
+
+<script>
+    const defaultExams = [
+        {
+            code: "PY101",
+            title: "امتحان أساسيات بايثون",
+            questions: [
+                {
+                    type: "mcq",
+                    question: "ما هي لغة البرمجة الأساسية المستخدمة عادة في الذكاء الاصطناعي وتحليل البيانات؟",
+                    options: ["Python", "HTML", "CSS", "C++"],
+                    answer: 0
+                },
+                {
+                    type: "essay",
+                    question: "اذكر باختصار الفرق الأساسي بين لغات البرمجة المفسرة (Interpreted) والمترجمة (Compiled)؟",
+                    modelAnswer: "اللغات المترجمة يتم تحويل كودها بالكامل إلى لغة الآلة دفعة واحدة قبل التنفيذ، بينما المفسرة تُنفذ سطر بسطر."
+                }
+            ]
+        }
+    ];
+
+    let exams = JSON.parse(localStorage.getItem('asem_exams_v1')) || defaultExams;
+    let activeExam = null;
+    let currentQuestionIndex = 0;
+    let mcqScore = 0;
+    let selectedOption = null;
+    let studentName = "";
+    let userAnswers = [];
+    let timer;
+    let timeLeft = 35;
+
+    function startQuiz() {
+        const nameInput = document.getElementById('student-name').value.trim();
+        const codeInput = document.getElementById('exam-code-input').value.trim().toUpperCase();
+
+        if(!nameInput) {
+            alert("من فضلك أدخل اسمك الثلاثي!");
+            return;
+        }
+        if(!codeInput) {
+            alert("من فضلك أدخل كود الاختبار!");
+            return;
+        }
+
+        const foundExam = exams.find(ex => ex.code === codeInput);
+        if(!foundExam) {
+            alert("كود الاختبار غير صحيح! تأكد من الكود المرفق من المهندس عاصم.");
+            return;
+        }
+
+        activeExam = foundExam;
+        studentName = nameInput;
+        currentQuestionIndex = 0;
+        mcqScore = 0;
+        userAnswers = [];
+        
+        document.getElementById('login-screen').style.display = 'none';
+        document.getElementById('quiz-screen').style.display = 'block';
+        loadQuestion();
+    }
+
+    function loadQuestion() {
+        clearInterval(timer);
+        const currentQ = activeExam.questions[currentQuestionIndex];
+        
+        if (currentQ.type === 'essay') {
+            timeLeft = 90;
+        } else {
+            timeLeft = 35;
+        }
+        
+        document.getElementById('time-left').innerText = timeLeft;
+        startTimer();
+
+        selectedOption = null;
+        document.getElementById('question-progress').innerText = `السؤال ${currentQuestionIndex + 1} من ${activeExam.questions.length}`;
+        document.getElementById('question-text').innerText = currentQ.question;
+        
+        const optionsList = document.getElementById('options-list');
+        const essayContainer = document.getElementById('essay-container');
+
+        if(currentQ.type === 'mcq') {
+            optionsList.style.display = 'block';
+            essayContainer.style.display = 'none';
+            optionsList.innerHTML = "";
+            currentQ.options.forEach((opt, index) => {
+                const li = document.createElement('li');
+                li.className = 'option-item';
+                li.innerText = opt;
+                li.onclick = () => selectOption(index, li);
+                optionsList.appendChild(li);
+            });
+        } else {
+            optionsList.style.display = 'none';
+            essayContainer.style.display = 'block';
+            document.getElementById('essay-answer').value = "";
+        }
+    }
+
+    function startTimer() {
+        timer = setInterval(() => {
+            timeLeft--;
+            document.getElementById('time-left').innerText = timeLeft;
+            if(timeLeft <= 0) {
+                clearInterval(timer);
+                nextQuestion();
+            }
+        }, 1000);
+    }
+
+    function selectOption(index, element) {
+        document.querySelectorAll('.option-item').forEach(el => el.classList.remove('selected'));
+        element.classList.add('selected');
+        selectedOption = index;
+    }
+
+    function nextQuestion() {
+        clearInterval(timer);
+        const currentQ = activeExam.questions[currentQuestionIndex];
+
+        if(currentQ.type === 'mcq') {
+            userAnswers.push(selectedOption);
+            if(selectedOption !== null && selectedOption === currentQ.answer) {
+                mcqScore++;
+            }
+        } else {
+            const essayText = document.getElementById('essay-answer').value.trim();
+            userAnswers.push(essayText || "لم يكتب إجابة");
+        }
+
+        currentQuestionIndex++;
+
+        if(currentQuestionIndex < activeExam.questions.length) {
+            loadQuestion();
+        } else {
+            showResult();
+        }
+    }
+
+    function showResult() {
+        document.getElementById('quiz-screen').style.display = 'none';
+        document.getElementById('result-screen').style.display = 'block';
+        
+        const mcqTotal = activeExam.questions.filter(q => q.type === 'mcq').length;
+        document.getElementById('result-score').innerHTML = `الاختبار: ${activeExam.title}<br>الطالب: ${studentName}<br>نتيجة أسئلة الاختيار من متعدد: ${mcqScore} من ${mcqTotal}<br><span style="font-size:14px; color:#e67e22;">الأسئلة المقالية تم حفظ إجاباتها لمراجعتها</span>`;
+        
+        let reviewHtml = "<h4>مراجعة الإجابات والنموذج:</h4>";
+        activeExam.questions.forEach((q, i) => {
+            const userAns = userAnswers[i];
+            if(q.type === 'mcq') {
+                const isCorrect = userAns === q.answer;
+                reviewHtml += `
+                    <div style="background: ${isCorrect ? '#e8f8f5' : '#ffadad44'}; padding: 10px; border-radius: 6px; margin-bottom: 8px; font-size: 14px;">
+                        <strong>سؤال ${i+1} (اختيار من متعدد):</strong> ${q.question}<br>
+                        إجابتك: ${userAns !== null ? q.options[userAns] : 'لم تقم بالإجابة'} ${isCorrect ? '✅' : '❌'}<br>
+                        ${!isCorrect ? `الإجابة الصحيحة: <span style="color: var(--success);">${q.options[q.answer]}</span>` : ''}
+                    </div>
+                `;
+            } else {
+                reviewHtml += `
+                    <div style="background: #fcf3cf44; padding: 10px; border-radius: 6px; margin-bottom: 8px; font-size: 14px;">
+                        <strong>سؤال ${i+1} (مقالي):</strong> ${q.question}<br>
+                        إجابتك: <span style="color: #2c3e50;">${userAns}</span><br>
+                        <strong style="color: #e67e22;">نموذج الإجابة:</strong> ${q.modelAnswer}
+                    </div>
+                `;
+            }
+        });
+        document.getElementById('review-container').innerHTML = reviewHtml;
+    }
+
+    function resetQuiz() {
+        document.getElementById('result-screen').style.display = 'none';
+        document.getElementById('login-screen').style.display = 'block';
+        document.getElementById('student-name').value = "";
+        document.getElementById('exam-code-input').value = "";
+    }
+</script>
+
+</body>
+</html>
