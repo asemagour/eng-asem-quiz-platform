@@ -91,6 +91,17 @@
             border-radius: 20px;
             font-size: 14px;
         }
+        .warning-box {
+            background: #fadbd8;
+            color: #922b21;
+            padding: 8px 12px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            font-size: 13px;
+            display: none;
+            text-align: center;
+            font-weight: bold;
+        }
         .question-box {
             font-size: 18px;
             color: var(--dark);
@@ -139,7 +150,7 @@
     <div id="login-screen">
         <div class="form-group">
             <label>أدخل اسمك الثلاثي:</label>
-            <input type="text" id="student-name" placeholder="مثال: أحمد محمد علي">
+            <input type="text" id="student-name" placeholder=>
         </div>
         <div class="form-group">
             <label>أدخل كود الاختبار:</label>
@@ -150,6 +161,7 @@
 
     <!-- شاشة الاختبار -->
     <div id="quiz-screen" style="display: none;">
+        <div id="warning-box" class="warning-box">⚠️ تنبيه: محاولة مغادرة صفحة الاختبار ممنوعة!</div>
         <div class="quiz-header">
             <span id="question-progress">السؤال 1 من 0</span>
             <div class="timer-box">الوقت المتبقي: <span id="time-left">35</span> ثانية</div>
@@ -175,7 +187,7 @@
 
     <div class="footer-credit">
         منصة الاختبارات البرمجية والذكاء الاصطناعي<br>
-        إشراف وتطوير: <span>المهندس عاصم خالد</span> | تواصل واتساب وخط ساخن: <span>01020441459</span><br>
+        إشراف وتطوير: <span>المهندس عاصم خالد</span> | تواصل واتساب : <span>01020441459</span><br>
         جميع الحقوق محفوظة © 2026
     </div>
 </div>
@@ -190,12 +202,14 @@
                     type: "mcq",
                     question: "ما هي لغة البرمجة الأساسية المستخدمة عادة في الذكاء الاصطناعي وتحليل البيانات؟",
                     options: ["Python", "HTML", "CSS", "C++"],
-                    answer: 0
+                    answer: 0,
+                    marks: 5
                 },
                 {
                     type: "essay",
-                    question: "اذكر باختصار الفرق الأساسي بين لغات البرمجة المفسرة (Interpreted) والمترجمة (Compiled)؟",
-                    modelAnswer: "اللغات المترجمة يتم تحويل كودها بالكامل إلى لغة الآلة دفعة واحدة قبل التنفيذ، بينما المفسرة تُنفذ سطر بسطر."
+                    question: "اذكر باختصار الفرق الأساسي بين لغات البرمجة المفسرة والمترجمة؟",
+                    modelAnswer: "اللغات المترجمة تُحول بالكامل لآلة قبل التنفيذ، والمفسرة تُنَفذ سطر بسطر.",
+                    marks: 10
                 }
             ]
         }
@@ -203,59 +217,78 @@
 
     let exams = JSON.parse(localStorage.getItem('asem_exams_v1')) || defaultExams;
     let activeExam = null;
+    let examQuestions = []; // الأسئلة بعد الخلط العشوائي
     let currentQuestionIndex = 0;
-    let mcqScore = 0;
+    let earnedMarks = 0;
+    let totalExamMarks = 0;
     let selectedOption = null;
     let studentName = "";
     let userAnswers = [];
     let timer;
     let timeLeft = 35;
+    let tabSwitchCount = 0;
+
+    // رصد محاولات الغش (مغادرة التبويب)
+    document.addEventListener("visibilitychange", () => {
+        if (document.hidden && document.getElementById('quiz-screen').style.display === 'block') {
+            tabSwitchCount++;
+            const warning = document.getElementById('warning-box');
+            warning.style.display = 'block';
+            warning.innerText = `⚠️ تحذير (${tabSwitchCount}): محاولة مغادرة صفحة الاختبار!`;
+            if (tabSwitchCount >= 3) {
+                alert("تم إنهاء الاختبار تلقائياً لتجاوز عدد محاولات مغادرة الصفحة المسموح بها!");
+                showResult();
+            }
+        }
+    });
+
+    function shuffleArray(array) {
+        let arr = [...array];
+        for (let i = arr.length - 1; i > 0; i--) {
+            let j = Math.floor(Math.random() * (i + 1));
+            [arr[i], arr[j]] = [arr[j], arr[i]];
+        }
+        return arr;
+    }
 
     function startQuiz() {
         const nameInput = document.getElementById('student-name').value.trim();
         const codeInput = document.getElementById('exam-code-input').value.trim().toUpperCase();
 
-        if(!nameInput) {
-            alert("من فضلك أدخل اسمك الثلاثي!");
-            return;
-        }
-        if(!codeInput) {
-            alert("من فضلك أدخل كود الاختبار!");
-            return;
-        }
+        if(!nameInput) { alert("من فضلك أدخل اسمك الثلاثي!"); return; }
+        if(!codeInput) { alert("من فضلك أدخل كود الاختبار!"); return; }
 
         const foundExam = exams.find(ex => ex.code === codeInput);
-        if(!foundExam) {
-            alert("كود الاختبار غير صحيح! تأكد من الكود المرفق من المهندس عاصم.");
-            return;
-        }
+        if(!foundExam) { alert("كود الاختبار غير صحيح!"); return; }
 
         activeExam = foundExam;
         studentName = nameInput;
         currentQuestionIndex = 0;
-        mcqScore = 0;
+        earnedMarks = 0;
         userAnswers = [];
+        tabSwitchCount = 0;
+
+        // حساب الدرجة الكلية للاختبار وخلط الأسئلة عشوائياً لكل طالب
+        totalExamMarks = 0;
+        activeExam.questions.forEach(q => { totalExamMarks += (q.marks || 5); });
+        examQuestions = shuffleArray(activeExam.questions);
         
         document.getElementById('login-screen').style.display = 'none';
         document.getElementById('quiz-screen').style.display = 'block';
+        document.getElementById('warning-box').style.display = 'none';
         loadQuestion();
     }
 
     function loadQuestion() {
         clearInterval(timer);
-        const currentQ = activeExam.questions[currentQuestionIndex];
+        const currentQ = examQuestions[currentQuestionIndex];
         
-        if (currentQ.type === 'essay') {
-            timeLeft = 90;
-        } else {
-            timeLeft = 35;
-        }
-        
+        timeLeft = (currentQ.type === 'essay') ? 90 : 35;
         document.getElementById('time-left').innerText = timeLeft;
         startTimer();
 
         selectedOption = null;
-        document.getElementById('question-progress').innerText = `السؤال ${currentQuestionIndex + 1} من ${activeExam.questions.length}`;
+        document.getElementById('question-progress').innerText = `السؤال ${currentQuestionIndex + 1} من ${examQuestions.length} (درجة السؤال: ${currentQ.marks || 5})`;
         document.getElementById('question-text').innerText = currentQ.question;
         
         const optionsList = document.getElementById('options-list');
@@ -298,21 +331,22 @@
 
     function nextQuestion() {
         clearInterval(timer);
-        const currentQ = activeExam.questions[currentQuestionIndex];
+        const currentQ = examQuestions[currentQuestionIndex];
+        const qMarks = currentQ.marks || 5;
 
         if(currentQ.type === 'mcq') {
-            userAnswers.push(selectedOption);
+            userAnswers.push({ question: currentQ.question, type: 'mcq', userAns: selectedOption, correctAns: currentQ.answer, options: currentQ.options, marks: qMarks });
             if(selectedOption !== null && selectedOption === currentQ.answer) {
-                mcqScore++;
+                earnedMarks += qMarks;
             }
         } else {
             const essayText = document.getElementById('essay-answer').value.trim();
-            userAnswers.push(essayText || "لم يكتب إجابة");
+            userAnswers.push({ question: currentQ.question, type: 'essay', userAns: essayText || "لم يكتب إجابة", modelAnswer: currentQ.modelAnswer, marks: qMarks });
         }
 
         currentQuestionIndex++;
 
-        if(currentQuestionIndex < activeExam.questions.length) {
+        if(currentQuestionIndex < examQuestions.length) {
             loadQuestion();
         } else {
             showResult();
@@ -323,27 +357,40 @@
         document.getElementById('quiz-screen').style.display = 'none';
         document.getElementById('result-screen').style.display = 'block';
         
-        const mcqTotal = activeExam.questions.filter(q => q.type === 'mcq').length;
-        document.getElementById('result-score').innerHTML = `الاختبار: ${activeExam.title}<br>الطالب: ${studentName}<br>نتيجة أسئلة الاختيار من متعدد: ${mcqScore} من ${mcqTotal}<br><span style="font-size:14px; color:#e67e22;">الأسئلة المقالية تم حفظ إجاباتها لمراجعتها</span>`;
+        const percentage = Math.round((earnedMarks / totalExamMarks) * 100);
+        document.getElementById('result-score').innerHTML = `الاختبار: ${activeExam.title}<br>الطالب: ${studentName}<br>الدرجة: ${earnedMarks} من ${totalExamMarks} (${percentage}%)`;
+
+        // حفظ النتيجة في التخزين المحلي لتظهر في لوحة التحكم
+        let allResults = JSON.parse(localStorage.getItem('asem_student_results')) || [];
+        allResults.push({
+            examCode: activeExam.code,
+            examTitle: activeExam.title,
+            studentName: studentName,
+            earnedMarks: earnedMarks,
+            totalMarks: totalExamMarks,
+            percentage: percentage,
+            answers: userAnswers,
+            date: new Date().toLocaleString()
+        });
+        localStorage.setItem('asem_student_results', JSON.stringify(allResults));
         
-        let reviewHtml = "<h4>مراجعة الإجابات والنموذج:</h4>";
-        activeExam.questions.forEach((q, i) => {
-            const userAns = userAnswers[i];
-            if(q.type === 'mcq') {
-                const isCorrect = userAns === q.answer;
+        let reviewHtml = "<h4>مراجعة الإجابات:</h4>";
+        userAnswers.forEach((ans, i) => {
+            if(ans.type === 'mcq') {
+                const isCorrect = ans.userAns === ans.correctAns;
                 reviewHtml += `
                     <div style="background: ${isCorrect ? '#e8f8f5' : '#ffadad44'}; padding: 10px; border-radius: 6px; margin-bottom: 8px; font-size: 14px;">
-                        <strong>سؤال ${i+1} (اختيار من متعدد):</strong> ${q.question}<br>
-                        إجابتك: ${userAns !== null ? q.options[userAns] : 'لم تقم بالإجابة'} ${isCorrect ? '✅' : '❌'}<br>
-                        ${!isCorrect ? `الإجابة الصحيحة: <span style="color: var(--success);">${q.options[q.answer]}</span>` : ''}
+                        <strong>سؤال ${i+1}:</strong> ${ans.question}<br>
+                        إجابتك: ${ans.userAns !== null ? ans.options[ans.userAns] : 'لم تجب'} ${isCorrect ? '✅' : '❌'}<br>
+                        ${!isCorrect ? `الإجابة الصحيحة: <span style="color: var(--success);">${ans.options[ans.correctAns]}</span>` : ''}
                     </div>
                 `;
             } else {
                 reviewHtml += `
                     <div style="background: #fcf3cf44; padding: 10px; border-radius: 6px; margin-bottom: 8px; font-size: 14px;">
-                        <strong>سؤال ${i+1} (مقالي):</strong> ${q.question}<br>
-                        إجابتك: <span style="color: #2c3e50;">${userAns}</span><br>
-                        <strong style="color: #e67e22;">نموذج الإجابة:</strong> ${q.modelAnswer}
+                        <strong>سؤال ${i+1} (مقالي):</strong> ${ans.question}<br>
+                        إجابتك: ${ans.userAns}<br>
+                        <strong style="color: #e67e22;">نموذج الإجابة:</strong> ${ans.modelAnswer}
                     </div>
                 `;
             }
