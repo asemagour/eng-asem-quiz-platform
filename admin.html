@@ -22,7 +22,7 @@
             direction: rtl;
         }
         .container {
-            max-width: 700px;
+            max-width: 800px;
             margin: 40px auto;
             background: #fff;
             padding: 30px;
@@ -50,7 +50,7 @@
         
         .form-group { margin-bottom: 15px; }
         label { display: block; margin-bottom: 5px; font-weight: bold; color: var(--dark); }
-        input[type="text"], select, textarea {
+        input[type="text"], select, textarea, input[type="number"] {
             width: 100%;
             padding: 10px;
             border: 1px solid #bdc3c7;
@@ -74,6 +74,7 @@
         }
         .btn:hover { opacity: 0.9; }
         .btn-danger { background: var(--danger); }
+        .btn-info { background: var(--secondary); margin-bottom: 15px; }
         .admin-quiz-card {
             background: var(--light);
             padding: 15px;
@@ -102,6 +103,8 @@
         <div class="instructor-title">المهندس عاصم خالد</div>
     </div>
 
+    <button class="btn btn-info" onclick="exportResultsToExcel()">📥 تصدير نتائج الطلاب لملف Excel (CSV)</button>
+
     <h3>إنشاء امتحان جديد بكود خاص</h3>
     <div class="form-group">
         <label>عنوان الاختبار:</label>
@@ -124,6 +127,11 @@
     <div class="form-group">
         <label>نص السؤال:</label>
         <input type="text" id="new-q-text" placeholder="اكتب السؤال هنا...">
+    </div>
+
+    <div class="form-group">
+        <label>درجة هذا السؤال:</label>
+        <input type="number" id="new-q-marks" value="5" min="1">
     </div>
 
     <div id="mcq-fields">
@@ -177,12 +185,14 @@
                     type: "mcq",
                     question: "ما هي لغة البرمجة الأساسية المستخدمة عادة في الذكاء الاصطناعي وتحليل البيانات؟",
                     options: ["Python", "HTML", "CSS", "C++"],
-                    answer: 0
+                    answer: 0,
+                    marks: 5
                 },
                 {
                     type: "essay",
-                    question: "اذكر باختصار الفرق الأساسي بين لغات البرمجة المفسرة (Interpreted) والمترجمة (Compiled)؟",
-                    modelAnswer: "اللغات المترجمة يتم تحويل كودها بالكامل إلى لغة الآلة دفعة واحدة قبل التنفيذ، بينما المفسرة تُنفذ سطر بسطر."
+                    question: "اذكر باختصار الفرق الأساسي بين لغات البرمجة المفسرة والمترجمة؟",
+                    modelAnswer: "اللغات المترجمة تُحول بالكامل لآلة قبل التنفيذ، والمفسرة تُنَفذ سطر بسطر.",
+                    marks: 10
                 }
             ]
         }
@@ -209,13 +219,11 @@
     function addQuestionToExamBuilder() {
         const type = document.getElementById('question-type').value;
         const text = document.getElementById('new-q-text').value.trim();
+        const marks = parseInt(document.getElementById('new-q-marks').value) || 5;
 
-        if(!text) {
-            alert("من فضلك أدخل نص السؤال!");
-            return;
-        }
+        if(!text) { alert("من فضلك أدخل نص السؤال!"); return; }
 
-        let newQ = { type: type, question: text };
+        let newQ = { type: type, question: text, marks: marks };
 
         if(type === 'mcq') {
             const o0 = document.getElementById('opt-0').value.trim();
@@ -224,18 +232,12 @@
             const o3 = document.getElementById('opt-3').value.trim();
             const ans = parseInt(document.getElementById('correct-answer').value);
 
-            if(!o0 || !o1 || !o2 || !o3) {
-                alert("من فضلك املأ جميع خيارات الاختيار من متعدد!");
-                return;
-            }
+            if(!o0 || !o1 || !o2 || !o3) { alert("من فضلك املأ جميع خيارات الاختيار من متعدد!"); return; }
             newQ.options = [o0, o1, o2, o3];
             newQ.answer = ans;
         } else {
             const modelAns = document.getElementById('essay-model-answer').value.trim();
-            if(!modelAns) {
-                alert("من فضلك أدخل نموذج الإجابة الصحيحة للسؤال المقالي!");
-                return;
-            }
+            if(!modelAns) { alert("من فضلك أدخل نموذج الإجابة الصحيحة للسؤال المقالي!"); return; }
             newQ.modelAnswer = modelAns;
         }
 
@@ -260,7 +262,7 @@
             count.innerText = tempBuildingQuestions.length;
             list.innerHTML = "";
             tempBuildingQuestions.forEach((q, i) => {
-                list.innerHTML += `<li>${q.question} <span style="color:var(--secondary);">(${q.type === 'mcq' ? 'اختياري' : 'مقالي'})</span></li>`;
+                list.innerHTML += `<li>${q.question} <span style="color:var(--secondary);">(${q.type === 'mcq' ? 'اختياري' : 'مقالي'} - ${q.marks} درجات)</span></li>`;
             });
         } else {
             container.style.display = 'none';
@@ -271,41 +273,23 @@
         const title = document.getElementById('new-exam-title').value.trim();
         const code = document.getElementById('new-exam-code').value.trim().toUpperCase();
 
-        if(!title || !code) {
-            alert("من فضلك أدخل عنوان الاختبار وكود الدخول الخاص به!");
-            return;
-        }
-        if(tempBuildingQuestions.length === 0) {
-            alert("يجب إضافة سؤال واحد على الأقل للاختبار!");
-            return;
-        }
+        if(!title || !code) { alert("من فضلك أدخل عنوان الاختبار وكود الدخول!"); return; }
+        if(tempBuildingQuestions.length === 0) { alert("يجب إضافة سؤال واحد على الأقل!"); return; }
+        if(exams.some(ex => ex.code === code)) { alert("كود الاختبار موجود مسبقاً!"); return; }
 
-        if(exams.some(ex => ex.code === code)) {
-            alert("كود الاختبار موجود مسبقاً، اختر كود آخر فريد!");
-            return;
-        }
-
-        exams.push({
-            code: code,
-            title: title,
-            questions: [...tempBuildingQuestions]
-        });
-
+        exams.push({ code: code, title: title, questions: [...tempBuildingQuestions] });
         saveExamsStorage();
         tempBuildingQuestions = [];
         updateBuildingListUI();
         document.getElementById('new-exam-title').value = "";
         document.getElementById('new-exam-code').value = "";
         renderAdminExams();
-        alert("تم إنشاء ونشر الاختبار بنجاح بررمز الدخول: " + code);
+        alert("تم إنشاء ونشر الاختبار بنجاح برمز: " + code);
     }
 
     function deleteExam(code) {
-        if(exams.length <= 1) {
-            alert("يجب أن تبقي على اختبار واحد على الأقل في المنصة!");
-            return;
-        }
-        if(confirm("هل أنت متأكد من حذف هذا الاختبار بالكامل؟")) {
+        if(exams.length <= 1) { alert("يجب أن تبقي على اختبار واحد على الأقل!"); return; }
+        if(confirm("هل أنت متأكد من حذف هذا الاختبار؟")) {
             exams = exams.filter(ex => ex.code !== code);
             saveExamsStorage();
             renderAdminExams();
@@ -313,12 +297,31 @@
     }
 
     function resetDefaultExams() {
-        if(confirm("هل تريد استعادة الاختبارات الافتراضية؟")) {
+        if(confirm("استعادة الافتراضية؟")) {
             exams = JSON.parse(JSON.stringify(defaultExams));
             saveExamsStorage();
             renderAdminExams();
-            alert("تمت استعادة الاختبارات الافتراضية بنجاح!");
+            alert("تمت الاستعادة بنجاح!");
         }
+    }
+
+    function exportResultsToExcel() {
+        let results = JSON.parse(localStorage.getItem('asem_student_results')) || [];
+        if(results.length === 0) { alert("لا توجد نتائج طلاب مسجلة حتى الآن."); return; }
+
+        let csvContent = "\uFEFFاسم الطالب,كود الاختبار,اسم الاختبار,الدرجة,الدرجة الكلية,النسبة المئوية,التاريخ\n";
+        results.forEach(r => {
+            csvContent += `"${r.studentName}","${r.examCode}","${r.examTitle}",${r.earnedMarks},${r.totalMarks},"${r.percentage}%","${r.date}"\n`;
+        });
+
+        let blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        let url = URL.createObjectURL(blob);
+        let a = document.createElement('a');
+        a.setAttribute('href', url);
+        a.setAttribute('download', 'Asem_Students_Results.csv');
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
     }
 
     function renderAdminExams() {
